@@ -14,6 +14,8 @@ base_config = {
     # number of messages to keep in memory (odd #s work best)
     "TRAILING_MESSAGE_COUNT": 3,
     "SYSTEM_PROMPT": "You are Pi-Card, the Raspberry Pi AI assistant.",
+    "N8N_WEBHOOK_ENABLED": False,  # Enable to send conversation data to n8n webhook
+    "N8N_WEBHOOK_URL": os.getenv("N8N_WEBHOOK_URL", ""),  # n8n webhook URL
 }
 
 config = {

@@ -1,5 +1,8 @@
 import re
 import os
+import requests
+import json
+from datetime import datetime
 
 
 def check_if_vision_mode(transcription):
@@ -73,3 +76,46 @@ def remove_parentheses(transcription):
     Remove parentheses and their contents from the transcription.
     """
     return re.sub(r"\(.*\)", "", transcription).strip()
+
+
+def send_to_n8n_webhook(webhook_url, transcription, response, tool_used=None):
+    """
+    Send conversation data to n8n webhook.
+    
+    Args:
+        webhook_url: The n8n webhook URL
+        transcription: The user's transcribed input
+        response: The assistant's response
+        tool_used: Optional tool that was used (e.g., 'weather', 'news', 'spotify')
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not webhook_url:
+        return False
+    
+    try:
+        payload = {
+            "timestamp": datetime.now().isoformat(),
+            "transcription": transcription,
+            "response": response,
+            "tool_used": tool_used
+        }
+        
+        result = requests.post(
+            webhook_url,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=5
+        )
+        
+        if result.status_code == 200:
+            print(f"Successfully sent data to n8n webhook")
+            return True
+        else:
+            print(f"Failed to send to n8n webhook: {result.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"Error sending to n8n webhook: {e}")
+        return False

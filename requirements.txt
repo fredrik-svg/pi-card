@@ -13,3 +13,4 @@ timm==0.9.16
 faster-whisper==1.0.2
 newsapi-python==0.2.7
 spotipy==2.24.0
+requests==2.31.0

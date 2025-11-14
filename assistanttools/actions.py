@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config import config
 from .generate_detr import generate_bounding_box_caption, model, processor
 from .generate_gguf import generate_gguf_stream
-from .utils import check_if_vision_mode, dictate_ollama_stream, remove_parentheses
+from .utils import check_if_vision_mode, dictate_ollama_stream, remove_parentheses, send_to_n8n_webhook
 from .bert import load_model, predict_tool
 from .play_spotify import play_spotify
 load_dotenv()
@@ -42,6 +42,8 @@ def get_llm_response(transcription, message_history, model_name='llama3:instruct
     print("Here's what you said: ", transcription)
     transcription = remove_parentheses(transcription)
     use_rag_model = False
+    tool_used = None
+    
     if use_rag:
         predicted_tool = predict_tool(transcription, model, tokenizer)
         # Experimental idea for supplmenting with external data. Tool use may be better but this could start.
@@ -50,16 +52,24 @@ def get_llm_response(transcription, message_history, model_name='llama3:instruct
             message_history = add_in_weather_data(
                 message_history, transcription)
             use_rag_model = True
+            tool_used = 'weather'
         elif predicted_tool == 'take_picture':
             response, message_history = generate_image_response(
                 message_history, transcription)
+            # Send to n8n webhook if enabled
+            if config.get('N8N_WEBHOOK_ENABLED', False) and config.get('N8N_WEBHOOK_URL'):
+                send_to_n8n_webhook(config['N8N_WEBHOOK_URL'], transcription, response, 'camera')
             return response, message_history
         elif predicted_tool == 'check_news':
             message_history = add_in_news_data(message_history, transcription)
             use_rag_model = True
+            tool_used = 'news'
         elif predicted_tool == 'play_spotify':
             response, message_history = play_spotify(
                 transcription, message_history)
+            # Send to n8n webhook if enabled
+            if config.get('N8N_WEBHOOK_ENABLED', False) and config.get('N8N_WEBHOOK_URL'):
+                send_to_n8n_webhook(config['N8N_WEBHOOK_URL'], transcription, response, 'spotify')
             return response, message_history
         elif predicted_tool == 'no_tool_needed':
             message_history.append({
@@ -89,6 +99,10 @@ def get_llm_response(transcription, message_history, model_name='llama3:instruct
         'role': 'assistant',
         'content': response,
     })
+    
+    # Send to n8n webhook if enabled
+    if config.get('N8N_WEBHOOK_ENABLED', False) and config.get('N8N_WEBHOOK_URL'):
+        send_to_n8n_webhook(config['N8N_WEBHOOK_URL'], transcription, response, tool_used)
 
     return response, message_history
 
