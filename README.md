@@ -91,6 +91,36 @@ To make pi-card a bit more like a real assistant, there are a couple tools it ha
 
 The model is easy to install, but to enable tool access, take a look at .env.example file for context on what keys and secrets are necessary.
 
+##### n8n Webhook Integration
+
+Pi-Card can now send conversation data to an [n8n](https://n8n.io/) workflow via webhook. This allows you to automate actions based on conversations, log interactions, or integrate with other services.
+
+To enable n8n webhook integration:
+
+1. Set up an n8n workflow with a webhook trigger node
+2. Copy your webhook URL
+3. Add the webhook URL to your `.env` file:
+   ```
+   N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/your-webhook-id
+   ```
+4. Enable the webhook in `config.py` by setting:
+   ```python
+   "N8N_WEBHOOK_ENABLED": True
+   ```
+
+When enabled, Pi-Card will send the following data to your n8n webhook after each conversation turn:
+- `timestamp`: ISO format timestamp of the interaction
+- `transcription`: The user's spoken input (transcribed)
+- `response`: The assistant's response
+- `tool_used`: Optional field indicating which tool was used (e.g., 'weather', 'news', 'spotify', 'camera')
+
+This enables powerful automation possibilities, such as:
+- Logging all conversations to a database
+- Triggering smart home actions based on conversations
+- Creating calendar events or reminders
+- Sending notifications to other systems
+- Analyzing conversation patterns
+
 For whisper.cpp, you will need to follow the quick-start guide in the [README](https://github.com/ggerganov/whisper.cpp?tab=readme-ov-file#quick-start).
 
 ##### Vision Model
