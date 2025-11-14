@@ -8,6 +8,7 @@
 -   [Introduction](#introduction)
 -   [Usage](#usage)
 -   [Hardware](#hardware)
+-   [Raspberry Pi Compatibility](#raspberry-pi-compatibility)
 -   [Setup](#setup)
 -   [Roadmap](#roadmap)
 
@@ -21,6 +22,8 @@ One other thing to note is that due to llama cpp no longer actively supporting v
 
 Pi-Card is an AI powered assistant running entirely on a Raspberry Pi. It is capable of doing what a standard LLM (like ChatGPT) can do in a conversational setting.
 In addition, if there is a camera equipped, you can also ask Pi-card to take a photo, describe what it sees, and then ask questions about that image.
+
+**Hardware Requirements:** Pi-Card requires a Raspberry Pi 4 (4GB+ RAM) or Raspberry Pi 5 for optimal performance. See the [Raspberry Pi Compatibility](#raspberry-pi-compatibility) section for details on supported models.
 
 ### Why Pi-card?
 
@@ -126,6 +129,46 @@ The camera connector is optional, but if you want to use the camera functionalit
 For setting up the GPIO button, I found the first couple minutes of [this tutorial](https://youtu.be/IHvtJvgM_eQ?si=VZzhElu5yYTt7zcV) great.
 
 Feel free to use your own, this is what worked for me!
+
+### Raspberry Pi Compatibility
+
+#### Recommended Models
+
+Pi-Card is designed and tested on **Raspberry Pi 5**, which provides the best performance. The following models are also compatible:
+
+-   **Raspberry Pi 5** (Recommended) - Best performance, real-time or near-real-time responses
+-   **Raspberry Pi 4** (4GB+ RAM) - Good performance with moderate response times (~10-20 seconds)
+-   **Raspberry Pi 3** - Functional but slower (~30+ seconds per query)
+
+#### Pi Zero WH Compatibility
+
+**The Raspberry Pi Zero WH is NOT recommended for this project.** While technically possible to run some components with significant modifications, the Pi Zero WH has severe limitations that make it impractical for Pi-Card:
+
+**Hardware Constraints:**
+-   **CPU**: Single-core ARMv6 1GHz (vs Pi 5's quad-core ARMv8 2.4GHz)
+-   **RAM**: 512MB (vs Pi 5's 4-8GB)
+-   **Architecture**: 32-bit ARMv6 (lacks modern optimizations)
+
+**Specific Component Issues:**
+
+1. **whisper.cpp (Audio Transcription)**
+   - ARMv6 lacks NEON instruction support, causing "illegal instruction" errors
+   - Requires special compilation with ARMv6-specific flags
+   - Even with the tiny.en model, expect 1-2+ minutes per audio transcription (vs 10-20 seconds on Pi 4)
+   - Not feasible for real-time or interactive use
+
+2. **Ollama/llama.cpp (LLM)**
+   - Ollama officially requires 64-bit Raspberry Pi OS (Pi Zero WH is 32-bit only)
+   - 512MB RAM is insufficient for even the smallest quantized models used in Pi-Card
+   - Minimum practical requirement: ~400MB just for TinyLlama, leaving no room for OS and other processes
+   - Would need ultra-tiny models (15M-136M parameters) not compatible with Pi-Card's features
+
+3. **PyTorch/Transformers (Tool-BERT)**
+   - Only unofficial, outdated PyTorch builds exist for ARMv6
+   - 512MB RAM cannot load transformer models used for tool selection
+   - Likely to fail with out-of-memory errors
+
+**Verdict:** For a functional Pi-Card experience, use Raspberry Pi 4 or 5. The Pi Zero WH's hardware is too limited for the AI models and real-time processing required by this project.
 
 ## Roadmap
 
